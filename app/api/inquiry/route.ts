@@ -1,0 +1,2 @@
+import { NextResponse } from 'next/server';
+export async function POST(req:Request){try{const b=await req.json(); if(!b.name||!b.email||!b.message)return NextResponse.json({error:'Missing fields'},{status:400}); console.log('AKAME_INQUIRY', {name:b.name,email:b.email,message:b.message,receivedAt:new Date().toISOString()}); return NextResponse.json({ok:true});}catch{return NextResponse.json({error:'Invalid request'},{status:400});}}
