@@ -1,3 +1,4 @@
+import "../globals.css";
 import "./admin.css";
 import Link from "next/link";
 import { BedDouble, Image, Inbox, MapPin, Search, Settings, Sparkles, Star, Waves } from "lucide-react";
