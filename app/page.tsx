@@ -4,7 +4,7 @@ import { Waves, BedDouble, Bath, Users, Wifi, Car, Snowflake, UtensilsCrossed, M
 
 const imgs = [
 '/images/WhatsApp Image 2026-10-02 at 22.56.07 (8).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (6).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (2).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (7).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.07 (3).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (5).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (3).jpeg'];
-const booking='https://www.booking.com/hotel/cy/akame-luxury-beach-villa-by-nomads-private-pool-amp-jacuzzi.html';
+const booking='https://akameluxurybeachvilla.reserve-online.net/';
 export default function Home(){
  const [menu,setMenu]=useState(false); const [light,setLight]=useState<number|null>(null); const [sent,setSent]=useState('');
  async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault(); setSent('Sending…'); const f=new FormData(e.currentTarget); const r=await fetch('/api/inquiry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(f))}); setSent(r.ok?'Thank you — your inquiry has been received.':'Please try again.'); if(r.ok)e.currentTarget.reset();}
