@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { createClient } from '@supabase/supabase-js';
 import './globals.css';
+import { villaStructuredData } from './villa-structured-data';
 export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
  const fallback={title:'Akamé | Luxury Beach Villa in Cyprus',description:'A private luxury beach villa near Akamas, Cyprus, with private pool and jacuzzi.'};
@@ -25,6 +26,7 @@ export default async function RootLayout({children}:{children:React.ReactNode}){
  }
  return <html lang="en"><body>
   {children}
+  <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(await villaStructuredData()).replace(/</g,'\\u003c')}}/>
   {measurementId&&<><Script src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} strategy="afterInteractive"/>
   <Script id="akame-google-analytics" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${measurementId}');`}</Script></>}
  </body></html>;
