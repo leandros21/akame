@@ -15,7 +15,7 @@ const fields = [
   { key:'seo_title', label:'SEO title' },
   { key:'seo_description', label:'SEO description' },
 ];
-const nav = [['Dashboard',Sparkles],['Villa content',BedDouble],['Gallery',Image],['Amenities',Waves],['Reviews',Sparkles],['Experiences',Waves],['Enquiries',Inbox],['SEO',Search],['Admins',Users],['Settings',Settings]] as const;
+const nav = [['Dashboard',Sparkles],['Villa content',BedDouble],['Gallery',Image],['Amenities',Waves],['Reviews',Sparkles],['Experiences',Waves],['Enquiries',Inbox],['SEO',Search],['Analytics',Search],['Admins',Users],['Settings',Settings]] as const;
 export default function AdminPage(){
  const [loading,setLoading]=useState(true);
  const [authorized,setAuthorized]=useState(false);
@@ -65,7 +65,7 @@ export default function AdminPage(){
  async function save(){
   if(!supabase)return;
   setSaving(true);setStatus('');
-  const keys=section==='SEO'?(seoTab==='robots'?['robots_txt']:seoTab==='llms'?['llms_txt']:['seo_title','seo_description']):section==='Amenities'?['amenities']:section==='Reviews'?['reviews']:section==='Experiences'?['experiences']:['hero_title','hero_subtitle','villa_description'];
+  const keys=section==='Analytics'?['analytics_tag']:section==='SEO'?(seoTab==='robots'?['robots_txt']:seoTab==='llms'?['llms_txt']:['seo_title','seo_description']):section==='Amenities'?['amenities']:section==='Reviews'?['reviews']:section==='Experiences'?['experiences']:['hero_title','hero_subtitle','villa_description'];
   const {error}=await supabase.from('site_content').upsert(keys.map(key=>({key,value:key==='amenities'?JSON.stringify((values[key]||'').split('\n').map(x=>x.trim()).filter(Boolean)):values[key]||''})),{onConflict:'key'});
   setStatus(error?'Could not save: '+error.message:'Changes saved to Supabase');
   setSaving(false);
@@ -73,8 +73,8 @@ export default function AdminPage(){
  async function logout(){await supabase?.auth.signOut();setAuthorized(false);setPassword('');}
  if(loading)return <div className="adminGate">Loading Akamé admin…</div>;
  if(!authorized)return <main className="adminGate"><form onSubmit={login} className="adminLogin"><span className="adminBrand">AKAMÉ</span><small>PRIVATE VILLA ADMIN</small><h1>Welcome back.</h1><p>Sign in to manage Akamé Villa.</p><label>Email<input type="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input type="password" required value={password} onChange={e=>setPassword(e.target.value)}/></label>{error&&<p role="alert" className="adminError">{error}</p>}<button type="submit">Sign in</button><Link href="/">← Back to website</Link></form></main>;
- const editable=['Villa content','SEO','Amenities','Reviews','Experiences'].includes(section);
- const editFields=section==='SEO'?(seoTab==='robots'?[{key:'robots_txt',label:'robots.txt content'}]:seoTab==='llms'?[{key:'llms_txt',label:'llms.txt content'}]:fields.slice(3)):section==='Villa content'?fields.slice(0,3):[{key:section.toLowerCase(),label:section==='Amenities'?'Amenities (one per line)':'Content'}];
+ const editable=['Villa content','SEO','Analytics','Amenities','Reviews','Experiences'].includes(section);
+ const editFields=section==='Analytics'?[{key:'analytics_tag',label:'Google Analytics 4 (gtag.js) code'}]:section==='SEO'?(seoTab==='robots'?[{key:'robots_txt',label:'robots.txt content'}]:seoTab==='llms'?[{key:'llms_txt',label:'llms.txt content'}]:fields.slice(3)):section==='Villa content'?fields.slice(0,3):[{key:section.toLowerCase(),label:section==='Amenities'?'Amenities (one per line)':'Content'}];
 
  const uploadPhoto=async(file:File)=>{
   if(!supabase)return;
@@ -160,8 +160,8 @@ export default function AdminPage(){
    {section==='Enquiries' && <article className="adminPanel adminEditor"><h2>Guest enquiries</h2>{enquiries.length===0?<p>No enquiries yet.</p>:enquiries.map(e=><div key={e.id} className="adminMember"><div><b>{e.name} · {e.email}</b><p>{e.message}</p><small>{new Date(e.created_at).toLocaleString()}</small></div><select value={e.status} onChange={async ev=>{const status=ev.target.value;const {error}=await supabase!.from('inquiries').update({status}).eq('id',e.id);if(!error)setEnquiries(v=>v.map(x=>x.id===e.id?{...x,status}:x));}}><option value="new">New</option><option value="replied">Replied</option><option value="closed">Closed</option></select></div>)}</article>}
    {editable && <article className="adminPanel adminEditor"><p className="adminEyebrow">SUPABASE CONTENT EDITOR</p><h2>{section}</h2>
     {section==='SEO' && <div className="seoSubnav">{([['meta','Meta Tags'],['robots','robots.txt'],['llms','llms.txt']] as const).map(([id,label])=><button key={id} type="button" className={seoTab===id?'selected':''} onClick={()=>{setSeoTab(id);setStatus('');}}>{label}</button>)}</div>}
-    <p>Save your changes securely to the CMS database.</p>
-    {editFields.map(f=><label key={f.key}>{f.label}<textarea spellCheck={!f.key.endsWith('_txt')} rows={f.key.endsWith('_txt')?14:f.key.includes('description')?5:2} value={values[f.key]||''} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))}/></label>)}
+    {section==='Analytics'?<p>Paste the Google tag code here. For security, only a valid GA4 Measurement ID (G-...) is used to load Google Analytics on the public website. This does not yet show analytics reports in the admin.</p>:<p>Save your changes securely to the CMS database.</p>}
+    {editFields.map(f=><label key={f.key}>{f.label}<textarea spellCheck={!f.key.endsWith('_txt')} rows={f.key==='analytics_tag'||f.key.endsWith('_txt')?14:f.key.includes('description')?5:2} value={values[f.key]||''} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))}/></label>)}
     <button onClick={save} disabled={saving}><Save size={16}/>{saving?'Saving…':'Save changes'}</button><p role="status">{status}</p>
     {section==='SEO' && seoTab==='robots' && <a href="/robots.txt" target="_blank" rel="noreferrer">Open public robots.txt ↗</a>}
     {section==='SEO' && seoTab==='llms' && <a href="/llms.txt" target="_blank" rel="noreferrer">Open public llms.txt ↗</a>}
