@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { createClient } from '@supabase/supabase-js';
 import './globals.css';
 export const dynamic = 'force-dynamic';
@@ -8,4 +9,23 @@ export async function generateMetadata(): Promise<Metadata> {
  if(!url||!key)return fallback;
  try { const db=createClient(url,key,{auth:{persistSession:false}});const {data}=await db.from('site_content').select('key,value').in('key',['seo_title','seo_description']);const m=Object.fromEntries((data||[]).map(x=>[x.key,x.value]));return {title:m.seo_title?.trim()||fallback.title,description:m.seo_description?.trim()||fallback.description};}catch{return fallback;}
 }
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body>{children}</body></html>}
+export default async function RootLayout({children}:{children:React.ReactNode}){
+ let measurementId='G-F7QENB7XVH';
+ const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
+ const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+ if(url&&key){
+  try{
+   const db=createClient(url,key,{auth:{persistSession:false}});
+   const {data}=await db.from('site_content').select('value').eq('key','analytics_tag').maybeSingle();
+   if(data?.value){
+    const match=data.value.match(/gtag\s*\(\s*['"]config['"]\s*,\s*['"](G-[A-Z0-9]+)['"]/i);
+    measurementId=match?.[1]?.toUpperCase()||'';
+   }
+  }catch{}
+ }
+ return <html lang="en"><body>
+  {children}
+  {measurementId&&<><Script src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} strategy="afterInteractive"/>
+  <Script id="akame-google-analytics" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${measurementId}');`}</Script></>}
+ </body></html>;
+}
