@@ -30,6 +30,8 @@ export default function AdminPage(){
  const [enquiries,setEnquiries]=useState<{id:number,name:string,email:string,message:string,status:string,created_at:string}[]>([]);
  const [newImage,setNewImage]=useState('');
  const [siteSlots,setSiteSlots]=useState<Record<number,string>>({});
+ const [pendingSlots,setPendingSlots]=useState<Record<number,string>>({});
+ const [replacingSlot,setReplacingSlot]=useState<number|null>(null);
  const [status,setStatus]=useState('');
  const [role,setRole]=useState('admin');const [members,setMembers]=useState<{user_id:string,role:string}[]>([]);const [invites,setInvites]=useState<{email:string,role:string}[]>([]);const [inviteEmail,setInviteEmail]=useState('');const [uploading,setUploading]=useState(false);
  useEffect(()=>{
@@ -86,10 +88,23 @@ export default function AdminPage(){
   if(saveError){setStatus(saveError.message);}else{const {data:all}=await supabase.from('gallery_images').select('*').order('sort_order');setImages(all||[]);setStatus('Photo uploaded to library. Choose a website slot below to publish it.');}
   setUploading(false);
  };
- const replacePhoto=async(slot:number,path:string)=>{
-  if(!supabase||!path)return;
+ const replacePhoto=async(slot:number)=>{
+  if(!supabase)return;
+  const path=pendingSlots[slot];
+  if(!path){setStatus('Choose a replacement photo first.');return;}
+  setReplacingSlot(slot);setStatus('');
   const {error}=await supabase.from('site_image_slots').upsert({slot,image_path:path},{onConflict:'slot'});
-  if(error)setStatus(error.message);else{setSiteSlots(v=>({...v,[slot]:path}));setStatus('Website photo replaced.');}
+  if(error)setStatus('Replace failed: '+error.message);
+  else{setSiteSlots(v=>({...v,[slot]:path}));setPendingSlots(v=>({...v,[slot]:''}));setStatus('Photo replaced! Reload the public website to see the change.');}
+  setReplacingSlot(null);
+ };
+ const restorePhoto=async(slot:number)=>{
+  if(!supabase)return;
+  setReplacingSlot(slot);setStatus('');
+  const {error}=await supabase.from('site_image_slots').delete().eq('slot',slot);
+  if(error)setStatus('Restore failed: '+error.message);
+  else{setSiteSlots(v=>{const next={...v};delete next[slot];return next;});setPendingSlots(v=>({...v,[slot]:''}));setStatus('Original photo restored on the website.');}
+  setReplacingSlot(null);
  };
  const removePhoto=async(id:number)=>{
   if(!supabase)return;const {error}=await supabase.from('gallery_images').delete().eq('id',id);
@@ -101,6 +116,7 @@ export default function AdminPage(){
   const {error}=await supabase.from('cms_admin_invites').insert({email,role:'admin'});
   if(error)setStatus(error.message);else{setInvites(v=>[...v,{email,role:'admin'}]);setInviteEmail('');setStatus('Invitation recorded. The person must create and verify a Supabase account with this email.');}
  };
+ const originalPhotos=['/images/WhatsApp Image 2026-10-02 at 22.56.07 (8).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (6).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (2).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (7).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.07 (3).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (5).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (3).jpeg'];
  const slotLabels=['Homepage hero','Villa feature','Gallery photo 1','Gallery photo 2','Gallery photo 3','Gallery photo 4','Gallery photo 5','Gallery photo 6','Location image'];
  return (
  <main className="adminShell">
@@ -123,7 +139,15 @@ export default function AdminPage(){
     <h3>Existing photos ({images.length})</h3>
     <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem"><img src={img.image_path} alt={img.alt_text||'Villa photo'}/><small>{img.alt_text||'Villa photo'}</small><button onClick={()=>removePhoto(img.id)}>Delete</button></div>)}</div>
     <h3>Replace a website photo</h3><p>Select a photo from the library for each position.</p>
-    {slotLabels.map((label,i)=><label key={i}>{label}<select value={siteSlots[i]||''} onChange={e=>replacePhoto(i,e.target.value)}><option value="">Original website photo</option>{images.map(img=><option key={img.id} value={img.image_path}>{img.alt_text||img.image_path}</option>)}</select></label>)}
+    {slotLabels.map((label,i)=><div key={i} className="photoReplaceSlot">
+     <h4>{label}</h4>
+     <div className="photoReplaceCompare">
+      <div><small>Currently on website</small><img src={siteSlots[i]||originalPhotos[i]} alt={'Current '+label}/></div>
+      <div><small>Selected replacement</small>{pendingSlots[i]?<img src={pendingSlots[i]} alt={'New '+label}/>:<div className="photoReplaceEmpty">Choose a photo below</div>}</div>
+     </div>
+     <label>Choose from photo library<select value={pendingSlots[i]||''} onChange={e=>setPendingSlots(v=>({...v,[i]:e.target.value}))}><option value="">Select a replacement photo…</option>{images.map(img=><option key={img.id} value={img.image_path}>{img.alt_text||img.image_path}</option>)}</select></label>
+     <div className="photoReplaceActions"><button type="button" disabled={!pendingSlots[i]||replacingSlot!==null} onClick={()=>replacePhoto(i)}>{replacingSlot===i?'Replacing…':'Replace Photo'}</button>{siteSlots[i]&&<button type="button" disabled={replacingSlot!==null} onClick={()=>restorePhoto(i)}>Restore Original</button>}</div>
+    </div>)}
     <p role="status">{status}</p>
    </article>}
    {section==='Admins' && role==='super_admin' && <article className="adminPanel adminEditor">
