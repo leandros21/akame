@@ -19,3 +19,21 @@
 /* Public website shortcut in admin sidebar */
 .adminSideFoot .adminWebsiteLink{display:flex;align-items:center;gap:10px;justify-content:center;padding:12px 14px;margin-bottom:14px;border-radius:6px;background:#d6e9d9;color:#183a30;text-decoration:none;font-weight:650;font-size:13px;transition:background .2s ease}
 .adminSideFoot .adminWebsiteLink:hover,.adminSideFoot .adminWebsiteLink:focus-visible{background:#edf7ee;outline-offset:3px}
+
+/* Compact enquiry inbox */
+.enquiryToolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:18px 0}
+.enquiryToolbar label{flex:1 1 155px;font-size:12px;font-weight:600}
+.enquiryToolbar label:last-child{flex:2 1 220px}
+.enquiryToolbar input,.enquiryToolbar select{width:100%;margin-top:6px}
+.enquiryList{border:1px solid #e5dfd4;border-radius:8px;overflow:hidden}
+.enquiryItem+.enquiryItem{border-top:1px solid #e5dfd4}
+.enquiryRow{display:flex;align-items:center;gap:10px;padding:8px 12px}
+.enquiryOpen{display:grid;grid-template-columns:minmax(130px,1.2fr) minmax(100px,2fr) minmax(65px,.8fr) 95px 14px;gap:12px;align-items:center;flex:1;min-width:0;border:0;background:transparent;text-align:left;color:inherit;cursor:pointer;padding:4px 0;font:inherit}
+.enquiryOpen:hover .enquiryGuest b{text-decoration:underline}
+.enquiryGuest{min-width:0}.enquiryGuest b,.enquiryGuest small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.enquiryGuest small{font-size:11px;color:#6e6c64;margin-top:3px}
+.enquiryPreview{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.enquirySource,.enquiryDate{font-size:12px;color:#55584b}
+.enquiryRow>select{width:92px;min-width:92px;padding:6px;font-size:12px}
+.enquiryDetails{padding:12px 16px 16px;background:#f7f4ee;border-top:1px solid #ebe5da;overflow-wrap:anywhere}
+.enquiryDetails p{white-space:pre-wrap;margin:0 0 12px}.enquiryDetails small{display:block;color:#6e6c64;margin-top:5px}
+@media(max-width:780px){.enquiryOpen{grid-template-columns:minmax(100px,1fr) minmax(65px,.7fr) 12px;gap:7px}.enquiryPreview,.enquiryDate{display:none}.enquiryRow{padding:8px}.enquiryRow>select{width:82px;min-width:82px}}
