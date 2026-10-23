@@ -69,7 +69,7 @@ export default function AdminPage(){
  async function save(){
   if(!supabase||saving)return;
   const keys=section==='Analytics'?['analytics_tag']:section==='SEO'?(seoTab==='robots'?['robots_txt']:seoTab==='llms'?['llms_txt']:['seo_title','seo_description']):section==='Villa content'?contentGroups[contentGroup as keyof typeof contentGroups]:section==='Amenities'?['amenities']:section==='Reviews'?['reviews']:section==='Experiences'?['experiences']:['hero_title','hero_subtitle','villa_description'];
-  const updates=keys.filter(key=>dirtyKeys.includes(key)&&typeof values[key]==='string'&&values[key].trim().length>0).map(key=>({key,value:key==='amenities'?JSON.stringify(values[key].split('\\n').map(x=>x.trim()).filter(Boolean)):values[key]}));
+  const updates=keys.filter(key=>dirtyKeys.includes(key)&&typeof values[key]==='string'&&values[key].trim().length>0).map(key=>({key,value:key==='amenities'?JSON.stringify(values[key].split('\n').map(x=>x.trim()).filter(Boolean)):values[key]}));
   if(!updates.length){setStatus('No non-empty changes to save. Existing content was preserved.');return;}
   setSaving(true);setStatus('');
   const {error}=await supabase.from('site_content').upsert(updates,{onConflict:'key'});
