@@ -7,13 +7,13 @@ export const socialPlatforms=[
  {key:'social_booking',name:'Booking.com',host:'booking.com',symbol:'B.'},
  {key:'social_tripadvisor',name:'TripAdvisor',host:'tripadvisor.',symbol:'◉'}
 ] as const;
-export function socialUrl(value:string|undefined,host:string){
+export function socialUrl(value:string|undefined,_host:string){
  if(!value?.trim())return '';
  try{
-  const url=new URL(value.trim());
+  const input=value.trim();
+  const url=new URL(input);
   if(url.protocol!=='https:'&&url.protocol!=='http:')return '';
-  const domain=url.hostname.toLowerCase();
-  if(!(domain===host||domain.endsWith('.'+host)||host==='tripadvisor.'&&domain.includes('tripadvisor.')))return '';
+  if(!url.hostname||url.username||url.password)return '';
   return url.href;
  }catch{return '';}
 }
