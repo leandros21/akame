@@ -74,3 +74,12 @@
 .socialFieldIcon.social_instagram{background:#b43580}.socialFieldIcon.social_facebook,.socialFieldIcon.social_linkedin{background:#1672ba}.socialFieldIcon.social_youtube{background:#d82727}.socialFieldIcon.social_booking{background:#17458e}.socialFieldIcon.social_tripadvisor{background:#12864a}
 .adminEditor .socialField input{min-width:0;width:100%;padding:12px;border:1px solid #d1cec6;border-radius:6px;background:white;color:#17231f}
 @media(max-width:650px){.adminEditor .socialField{grid-template-columns:36px minmax(0,1fr)}.adminEditor .socialField input{grid-column:1/-1}}
+
+
+/* SEO alt text editor on compact gallery thumbnails */
+.adminEditor .photoLibraryItem .photoAltLabel{display:flex;flex-direction:column;gap:7px;padding:10px 12px;font-size:12px;font-weight:650;color:#34453c}
+.adminEditor .photoLibraryItem .photoAltLabel input{width:100%;min-width:0;border:1px solid #d1cec6;background:#fff;border-radius:5px;padding:9px;color:#17231f;font:inherit;font-weight:400}
+.photoLibraryActions{display:flex;flex-wrap:wrap;gap:8px;padding:0 12px 12px}
+.adminEditor .photoLibraryActions button{margin:0;padding:9px 10px;border-radius:5px;font-size:12px;background:#263c31;color:#fff}
+.adminEditor .photoLibraryActions button:last-child{background:#755047}
+.adminEditor .photoLibraryActions button:disabled{opacity:.55;cursor:wait}
