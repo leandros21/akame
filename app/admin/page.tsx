@@ -15,6 +15,7 @@ const fields = [
   { key:'seo_title', label:'SEO title' },
   { key:'seo_description', label:'SEO description' },
 ];
+const contentGroups={"Header":["brand_name","header_subtitle","nav_villa","nav_gallery","nav_amenities","nav_location","nav_contact","booking_button"],"#top":["top_eyebrow","hero_title","top_title_italic","hero_subtitle","top_secondary_button","top_guests","top_bedrooms","top_bathrooms","top_pool"],"#villa":["villa_eyebrow","villa_title","villa_title_italic","villa_description","villa_paragraph_2","villa_link"],".featureGrid":["feature_eyebrow","feature_title","feature_title_italic","feature_description","feature_1","feature_2","feature_3","feature_4"],"#gallery":["gallery_eyebrow","gallery_title","gallery_title_italic","gallery_description","gallery_hover"],"#amenities":["amenities_eyebrow","amenities_title","amenities_title_italic","amenities"],"#location":["location_eyebrow","location_title","location_title_italic","location_description","location_link"],".quote":["quote_first","quote_italic","quote_attribution"],"#contact":["contact_eyebrow","contact_title","contact_title_italic","contact_description","contact_booking","contact_name_label","contact_name_placeholder","contact_email_label","contact_email_placeholder","contact_message_label","contact_message_placeholder","contact_submit"],"Footer":["footer_subtitle","footer_tagline","footer_credit","footer_back"]};
 const nav = [['Dashboard',Sparkles],['Villa content',BedDouble],['Gallery',Image],['Amenities',Waves],['Reviews',Sparkles],['Experiences',Waves],['Enquiries',Inbox],['SEO',Search],['Analytics',Search],['Admins',Users],['Settings',Settings]] as const;
 export default function AdminPage(){
  const [loading,setLoading]=useState(true);
@@ -23,6 +24,7 @@ export default function AdminPage(){
  const [password,setPassword]=useState('');
  const [error,setError]=useState('');
  const [section,setSection]=useState('Dashboard');
+ const [contentGroup,setContentGroup]=useState('#top');
  const [seoTab,setSeoTab]=useState<'meta'|'robots'|'llms'>('meta');
  const [values,setValues]=useState<Record<string,string>>({});
  const [saving,setSaving]=useState(false);
@@ -65,7 +67,7 @@ export default function AdminPage(){
  async function save(){
   if(!supabase)return;
   setSaving(true);setStatus('');
-  const keys=section==='Analytics'?['analytics_tag']:section==='SEO'?(seoTab==='robots'?['robots_txt']:seoTab==='llms'?['llms_txt']:['seo_title','seo_description']):section==='Amenities'?['amenities']:section==='Reviews'?['reviews']:section==='Experiences'?['experiences']:['hero_title','hero_subtitle','villa_description'];
+  const keys=section==='Analytics'?['analytics_tag']:section==='SEO'?(seoTab==='robots'?['robots_txt']:seoTab==='llms'?['llms_txt']:['seo_title','seo_description']):section==='Villa content'?contentGroups[contentGroup as keyof typeof contentGroups]:section==='Amenities'?['amenities']:section==='Reviews'?['reviews']:section==='Experiences'?['experiences']:['hero_title','hero_subtitle','villa_description'];
   const {error}=await supabase.from('site_content').upsert(keys.map(key=>({key,value:key==='amenities'?JSON.stringify((values[key]||'').split('\n').map(x=>x.trim()).filter(Boolean)):values[key]||''})),{onConflict:'key'});
   setStatus(error?'Could not save: '+error.message:'Changes saved to Supabase');
   setSaving(false);
@@ -74,7 +76,7 @@ export default function AdminPage(){
  if(loading)return <div className="adminGate">Loading Akamé admin…</div>;
  if(!authorized)return <main className="adminGate"><form onSubmit={login} className="adminLogin"><span className="adminBrand">AKAMÉ</span><small>PRIVATE VILLA ADMIN</small><h1>Welcome back.</h1><p>Sign in to manage Akamé Villa.</p><label>Email<input type="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input type="password" required value={password} onChange={e=>setPassword(e.target.value)}/></label>{error&&<p role="alert" className="adminError">{error}</p>}<button type="submit">Sign in</button><Link href="/">← Back to website</Link></form></main>;
  const editable=['Villa content','SEO','Analytics','Amenities','Reviews','Experiences'].includes(section);
- const editFields=section==='Analytics'?[{key:'analytics_tag',label:'Google Analytics 4 (gtag.js) code'}]:section==='SEO'?(seoTab==='robots'?[{key:'robots_txt',label:'robots.txt content'}]:seoTab==='llms'?[{key:'llms_txt',label:'llms.txt content'}]:fields.slice(3)):section==='Villa content'?fields.slice(0,3):[{key:section.toLowerCase(),label:section==='Amenities'?'Amenities (one per line)':'Content'}];
+ const editFields=section==='Analytics'?[{key:'analytics_tag',label:'Google Analytics 4 (gtag.js) code'}]:section==='SEO'?(seoTab==='robots'?[{key:'robots_txt',label:'robots.txt content'}]:seoTab==='llms'?[{key:'llms_txt',label:'llms.txt content'}]:fields.slice(3)):section==='Villa content'?contentGroups[contentGroup as keyof typeof contentGroups].map(key=>({key,label:key.replaceAll('_',' ')})):[{key:section.toLowerCase(),label:section==='Amenities'?'Amenities (one per line)':'Content'}];
 
  const uploadPhoto=async(file:File)=>{
   if(!supabase)return;
@@ -161,6 +163,7 @@ export default function AdminPage(){
    {editable && <article className="adminPanel adminEditor"><p className="adminEyebrow">SUPABASE CONTENT EDITOR</p><h2>{section}</h2>
     {section==='SEO' && <div className="seoSubnav">{([['meta','Meta Tags'],['robots','robots.txt'],['llms','llms.txt']] as const).map(([id,label])=><button key={id} type="button" className={seoTab===id?'selected':''} onClick={()=>{setSeoTab(id);setStatus('');}}>{label}</button>)}</div>}
     {section==='Analytics'?<p>Paste the Google tag code here. For security, only a valid GA4 Measurement ID (G-...) is used to load Google Analytics on the public website. This does not yet show analytics reports in the admin.</p>:<p>Save your changes securely to the CMS database.</p>}
+    {section==='Villa content'&&<label>HTML section<select value={contentGroup} onChange={e=>setContentGroup(e.target.value)}>{Object.keys(contentGroups).map(id=><option key={id} value={id}>{id}</option>)}</select></label>}
     {editFields.map(f=><label key={f.key}>{f.label}<textarea spellCheck={!f.key.endsWith('_txt')} rows={f.key==='analytics_tag'||f.key.endsWith('_txt')?14:f.key.includes('description')?5:2} value={values[f.key]||''} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))}/></label>)}
     <button onClick={save} disabled={saving}><Save size={16}/>{saving?'Saving…':'Save changes'}</button><p role="status">{status}</p>
     {section==='SEO' && seoTab==='robots' && <a href="/robots.txt" target="_blank" rel="noreferrer">Open public robots.txt ↗</a>}
