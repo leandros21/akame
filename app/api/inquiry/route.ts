@@ -1,9 +1,10 @@
+import { checkChallenge } from './challenge';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 export async function POST(req:Request){
  try {
   const b=await req.json();const name=String(b.name||'').trim(),email=String(b.email||'').trim(),message=String(b.message||'').trim();
-  if(String(b.human_answer??'').trim()!=='7')return NextResponse.json({error:'Incorrect verification answer'},{status:400});
+  if(!checkChallenge(b.verification_token,b.human_answer))return NextResponse.json({error:'Incorrect verification answer'},{status:400});
   if(!name||name.length>120||!email.includes('@')||email.length>254||!message||message.length>5000)return NextResponse.json({error:'Invalid fields'},{status:400});
   const clean=(v:unknown,max:number)=>typeof v==='string'?v.trim().slice(0,max):'';
   const source=clean(b.source,100)||'Unknown',medium=clean(b.medium,100),campaign=clean(b.campaign,150),referrer=clean(b.referrer,1000);
