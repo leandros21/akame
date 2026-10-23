@@ -130,7 +130,7 @@ export default function AdminPage(){
   <aside className="adminSide">
    <div className="adminLogo"><span>AKAMÉ</span><small>VILLA ADMIN</small></div>
    <nav>{nav.filter(([label])=>label!=='Admins'||role==='super_admin').map(([label,Icon])=><button key={label} className={section===label?'active':''} onClick={()=>{setSection(label);setStatus('');}}><Icon size={17}/><span>{label}</span></button>)}</nav>
-   <div className="adminSideFoot"><span>SECURE CMS</span><button onClick={logout}><LogOut size={15}/> Sign out</button></div>
+   <div className="adminSideFoot"><a href="/" target="_blank" rel="noopener noreferrer" className="adminWebsiteLink"><span>↗</span> View Website</a><span>SECURE CMS</span><button onClick={logout}><LogOut size={15}/> Sign out</button></div>
   </aside>
   <section className="adminMain">
    <header className="adminTop"><div><p className="adminEyebrow">AKAMAS · CYPRUS</p><h1>{section==='Dashboard'?'Welcome to Akamé.':section}</h1><p>Manage the villa experience from one calm, private workspace.</p></div><Link href="/" className="adminView">View website ↗</Link></header>
