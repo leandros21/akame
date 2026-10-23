@@ -1,4 +1,4 @@
-import { checkChallenge } from './challenge';
+import { checkChallenge } from './math-security';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 export async function POST(req:Request){
