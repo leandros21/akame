@@ -11,9 +11,25 @@ export default function Home(){
  const [menu,setMenu]=useState(false); const [light,setLight]=useState<number|null>(null); const [sent,setSent]=useState('');
  const [content,setContent]=useState<Record<string,string>>({});const [slots,setSlots]=useState<Record<number,string>>({});
  useEffect(()=>{if(!db)return;db.from('site_content').select('key,value').then(({data})=>{if(data)setContent(Object.fromEntries(data.map(x=>[x.key,x.value])));});db.from('site_image_slots').select('slot,image_path').then(({data})=>{if(data)setSlots(Object.fromEntries(data.map(x=>[x.slot,x.image_path])));});},[]);
+ const [attribution,setAttribution]=useState({source:'Unknown',medium:'',campaign:'',referrer:''});
+ useEffect(()=>{
+  try{
+   const params=new URLSearchParams(window.location.search);
+   const previous=sessionStorage.getItem('akame_attribution');
+   if(previous){setAttribution(JSON.parse(previous));return;}
+   const ref=document.referrer;
+   const host=ref?new URL(ref).hostname.toLowerCase():'';
+   const utm=params.get('utm_source')?.trim().slice(0,100);
+   const medium=params.get('utm_medium')?.trim().slice(0,100)||'';
+   const campaign=params.get('utm_campaign')?.trim().slice(0,150)||'';
+   const source=utm||(host.includes('google.')?'Google':host.includes('instagram.')?'Instagram':host.includes('facebook.')||host.includes('fb.com')?'Facebook':host.includes('tiktok.')?'TikTok':host.includes('bing.')?'Bing':host.includes('pinterest.')?'Pinterest':host&&host!==window.location.hostname?host:ref?'Internal':'Direct');
+   const data={source,medium,campaign,referrer:ref.slice(0,1000)};
+   sessionStorage.setItem('akame_attribution',JSON.stringify(data));setAttribution(data);
+  }catch{}
+ },[]);
  const photos=imgs.map((src,i)=>slots[i]||src);
  const amenities:string[]=(()=>{try{const a=JSON.parse(content.amenities||'[]');return Array.isArray(a)?a.filter((v:unknown)=>typeof v==='string'):[];}catch{return [];}})();
- async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault(); setSent('Sending…'); const f=new FormData(e.currentTarget); const r=await fetch('/api/inquiry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(f))}); setSent(r.ok?'Thank you — your inquiry has been received.':'Please try again.'); if(r.ok)e.currentTarget.reset();}
+ async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault(); setSent('Sending…'); const f=new FormData(e.currentTarget); const r=await fetch('/api/inquiry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...Object.fromEntries(f),...attribution})}); setSent(r.ok?'Thank you — your inquiry has been received.':'Please try again.'); if(r.ok)e.currentTarget.reset();}
  return <main>
   <header className="nav"><a className="brand" href="#top"><span>{content.brand_name||"AKAMÉ"}</span><small>{content.header_subtitle||"BEACH VILLA · CYPRUS"}</small></a><nav className={menu?'links open':'links'}>{['Villa','Gallery','Amenities','Location','Contact'].map(x=><a key={x} href={'#'+x.toLowerCase()} onClick={()=>setMenu(false)} >{content['nav_'+x.toLowerCase()]||x}</a>)}<a className="book" href={booking} target="_blank">Book your stay <ArrowUpRight size={15}/></a></nav><button className="hamb" onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button></header>
   <section id="top" className="hero" style={{backgroundImage:`linear-gradient(90deg,rgba(10,20,18,.56),rgba(10,20,18,.05)),url("${photos[0]}")`}}><div className="heroCopy"><p className="eyebrow">{content.top_eyebrow||"AKAMAS · CYPRUS"}</p><h1>{content.hero_title||'Where the wild'}<br/><em>{content.top_title_italic||"meets the refined."}</em></h1><p>{content.hero_subtitle||'A private beach escape shaped by Mediterranean light, quiet luxury and the untamed beauty of Akamas.'}</p><div className="actions"><a className="primary" href={booking} target="_blank">Book your stay <ArrowUpRight size={17}/></a><a className="ghost" href="#villa">{content.top_secondary_button||"Discover Akamé"}</a></div></div><div className="facts"><span><Users/>{content.top_guests||"Up to 8 guests"}</span><span><BedDouble/>{content.top_bedrooms||"4 bedrooms"}</span><span><Bath/>{content.top_bathrooms||"4 bathrooms"}</span><span><Waves/>{content.top_pool||"Private pool & jacuzzi"}</span></div></section>
