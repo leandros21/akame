@@ -55,3 +55,22 @@
 .adminEditor .enquiryToolbar input,.adminEditor .enquiryToolbar select{padding:10px 12px;border:1px solid #cec9bf;background:#fff;color:#17231f;border-radius:6px;font:inherit}
 .adminEditor .enquiryDetails{color:#17231f}
 @media(max-width:780px){.adminEditor .enquiryOpen{grid-template-columns:minmax(100px,1fr) minmax(65px,.7fr) 12px}}
+
+
+/* Compact gallery library: keep website slot replacement untouched */
+.adminEditor:has(.photoLibrary){max-width:1120px;width:100%}
+.photoLibrary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.photoLibraryItem{min-width:0;border:1px solid #e1dcd2;background:#fffdf9;border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
+.photoLibraryItem>img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.photoLibraryItem>small{padding:10px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#38443c}
+.adminEditor .photoLibraryItem>button{margin:0 12px 12px;padding:8px 13px;background:#293c32;color:#fff;border-radius:5px;font-size:12px}
+@media(max-width:750px){.photoLibrary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){.photoLibrary{grid-template-columns:1fr}}
+/* Social media settings */
+.adminEditor.socialEditor{max-width:950px;width:100%;background:#faf8f3}
+.socialFields{display:grid;gap:14px;width:100%}
+.adminEditor .socialField{display:grid;grid-template-columns:38px 125px minmax(0,1fr);gap:12px;align-items:center;font-size:14px;color:#1d2b24}
+.socialFieldIcon{width:32px;height:32px;display:grid;place-items:center;background:#263c31;color:#fff;border-radius:7px;font-size:18px;font-weight:750}
+.socialFieldIcon.social_instagram{background:#b43580}.socialFieldIcon.social_facebook,.socialFieldIcon.social_linkedin{background:#1672ba}.socialFieldIcon.social_youtube{background:#d82727}.socialFieldIcon.social_booking{background:#17458e}.socialFieldIcon.social_tripadvisor{background:#12864a}
+.adminEditor .socialField input{min-width:0;width:100%;padding:12px;border:1px solid #d1cec6;border-radius:6px;background:white;color:#17231f}
+@media(max-width:650px){.adminEditor .socialField{grid-template-columns:36px minmax(0,1fr)}.adminEditor .socialField input{grid-column:1/-1}}
