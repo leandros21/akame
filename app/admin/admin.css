@@ -15,3 +15,7 @@
 .photoReplaceActions button+button{background:transparent;color:#12251f}
 .photoReplaceActions button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:620px){.photoReplaceCompare{grid-template-columns:1fr}}
+
+/* Public website shortcut in admin sidebar */
+.adminSideFoot .adminWebsiteLink{display:flex;align-items:center;gap:10px;justify-content:center;padding:12px 14px;margin-bottom:14px;border-radius:6px;background:#d6e9d9;color:#183a30;text-decoration:none;font-weight:650;font-size:13px;transition:background .2s ease}
+.adminSideFoot .adminWebsiteLink:hover,.adminSideFoot .adminWebsiteLink:focus-visible{background:#edf7ee;outline-offset:3px}
