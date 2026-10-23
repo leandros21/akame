@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { BedDouble, Image, Inbox, Search, Settings, Sparkles, Waves, LogOut, Save, Users } from 'lucide-react';
 import './admin.css';
+import {socialPlatforms,socialUrl} from '../social-platforms';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
@@ -17,7 +18,7 @@ const fields = [
 ];
 const contentGroups={"Header":["brand_name","header_subtitle","nav_villa","nav_gallery","nav_amenities","nav_location","nav_contact","booking_button"],"#top":["top_eyebrow","hero_title","top_title_italic","hero_subtitle","top_secondary_button","top_guests","top_bedrooms","top_bathrooms","top_pool"],"#villa":["villa_eyebrow","villa_title","villa_title_italic","villa_description","villa_paragraph_2","villa_link"],".featureGrid":["feature_eyebrow","feature_title","feature_title_italic","feature_description","feature_1","feature_2","feature_3","feature_4"],"#gallery":["gallery_eyebrow","gallery_title","gallery_title_italic","gallery_description","gallery_hover"],"#amenities":["amenities_eyebrow","amenities_title","amenities_title_italic","amenities"],"#location":["location_eyebrow","location_title","location_title_italic","location_description","location_link"],".quote":["quote_first","quote_italic","quote_attribution"],"#contact":["contact_eyebrow","contact_title","contact_title_italic","contact_description","contact_booking","contact_name_label","contact_name_placeholder","contact_email_label","contact_email_placeholder","contact_message_label","contact_message_placeholder","contact_submit"],"Footer":["footer_subtitle","footer_tagline","footer_credit","footer_back"]};
 const contentDefaults:Record<string,string>={"brand_name":"AKAMÉ","header_subtitle":"BEACH VILLA · CYPRUS","hero_title":"Where the wild","top_title_italic":"meets the refined.","hero_subtitle":"A private beach escape shaped by Mediterranean light, quiet luxury and the untamed beauty of Akamas.","villa_title":"A slower rhythm,","villa_title_italic":"by the sea.","gallery_title":"Inside ","gallery_title_italic":"Akamé.","amenities_title":"Comfort, ","amenities_title_italic":"considered.","location_title":"At the edge of","location_title_italic":"something wild.","contact_title":"Your escape","contact_title_italic":"starts here.","quote_first":"Some places are visited.","quote_italic":"Others are felt.","footer_tagline":"Private pool · Jacuzzi · Akamas coast","amenities":"Private pool\nRooftop jacuzzi\nHigh-speed Wi-Fi\nAir conditioning\nEquipped kitchen\nPrivate parking\n4 bedrooms\n4 bathrooms","top_eyebrow":"AKAMAS · CYPRUS","top_secondary_button":"Discover Akamé","top_guests":"Up to 8 guests","top_bedrooms":"4 bedrooms","top_bathrooms":"4 bathrooms","top_pool":"Private pool & jacuzzi","villa_eyebrow":"THE VILLA","villa_description":"Akamé is a contemporary private villa designed for effortless days between sea, pool and sky. Generous indoor-outdoor spaces create a calm base for families and friends exploring the Akamas coast.","villa_paragraph_2":"Wake slowly, swim before breakfast, gather around the table at sunset, then retreat to the rooftop jacuzzi as the Mediterranean turns gold.","villa_link":"Explore the villa ↓","feature_eyebrow":"PRIVATE ESCAPE","feature_title":"Made for","feature_title_italic":"unhurried days.","feature_description":"Clean architecture, natural textures and generous outdoor living put the landscape at the centre of every stay.","feature_3":"Outdoor dining","feature_4":"Landscaped garden","gallery_eyebrow":"GALLERY","gallery_description":"Spaces designed to feel open, tactile and connected to the Mediterranean landscape.","gallery_hover":"View","amenities_eyebrow":"EVERYTHING YOU NEED","location_eyebrow":"THE AKAMAS COAST","location_description":"Set in Polis Chrysochous, Akamé places you close to Latchi and the dramatic landscapes of the Akamas Peninsula — one of Cyprus's most distinctive coastal escapes.","quote_attribution":"— AKAMÉ","contact_eyebrow":"CONTACT","contact_description":"Have a question before you book? Send us a note and we'll help with the details of your stay.","contact_name_label":"Name","contact_email_label":"Email","contact_message_label":"Message","footer_subtitle":"LUXURY BEACH VILLA · CYPRUS","footer_credit":"Designed by","footer_back":"Back to top ↑","nav_villa":"Villa","nav_gallery":"Gallery","nav_amenities":"Amenities","nav_location":"Location","nav_contact":"Contact","booking_button":"Book your stay","feature_1":"Private pool","feature_2":"Rooftop jacuzzi","contact_name_placeholder":"Your name","contact_email_placeholder":"you@email.com","contact_message_placeholder":"Tell us about your stay…","contact_submit":"Send inquiry","location_link":"Explore the area","contact_booking":"Check availability"};
-const nav = [['Dashboard',Sparkles],['Villa content',BedDouble],['Gallery',Image],['Amenities',Waves],['Reviews',Sparkles],['Experiences',Waves],['Enquiries',Inbox],['SEO',Search],['Analytics',Search],['Admins',Users],['Settings',Settings]] as const;
+const nav = [['Dashboard',Sparkles],['Villa content',BedDouble],['Gallery',Image],['Amenities',Waves],['Reviews',Sparkles],['Experiences',Waves],['Enquiries',Inbox],['Social Media',Users],['SEO',Search],['Analytics',Search],['Admins',Users],['Settings',Settings]] as const;
 export default function AdminPage(){
  const [loading,setLoading]=useState(true);
  const [authorized,setAuthorized]=useState(false);
@@ -80,6 +81,15 @@ export default function AdminPage(){
   if(error){setStatus('Could not save: '+error.message);}
   else{setDirtyKeys(previous=>previous.filter(key=>!updates.some(item=>item.key===key)));setStatus('Saved '+updates.length+' field(s) to Supabase.');}
   setSaving(false);
+ }
+ async function saveSocial(){
+  if(!supabase||saving)return;
+  const invalid=socialPlatforms.find(p=>values[p.key]?.trim()&&!socialUrl(values[p.key],p.host));
+  if(invalid){setStatus('Please enter a valid '+invalid.name+' URL or leave it blank.');return;}
+  setSaving(true);setStatus('');
+  const rows=socialPlatforms.map(p=>({key:p.key,value:values[p.key]?.trim()||''}));
+  const {error}=await supabase.from('site_content').upsert(rows,{onConflict:'key'});
+  setSaving(false);setStatus(error?'Could not save: '+error.message:'Social links saved successfully. Empty links are hidden from the website.');
  }
  async function logout(){await supabase?.auth.signOut();setAuthorized(false);setPassword('');}
  if(loading)return <div className="adminGate">Loading Akamé admin…</div>;
@@ -148,7 +158,7 @@ export default function AdminPage(){
     <h2>Photo library</h2><p>Upload photos here. They will not appear on the website until you assign them to a position below.</p>
     <label>Upload photo (max 10 MB)<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploading} onChange={async e=>{const file=e.target.files?.[0];if(file)await uploadPhoto(file);e.target.value='';}}/></label>
     <h3>Existing photos ({images.length})</h3>
-    <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem"><img src={img.image_path} alt={img.alt_text||'Villa photo'}/><small>{img.alt_text||'Villa photo'}</small><button onClick={()=>removePhoto(img.id)}>Delete</button></div>)}</div>
+    <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem"><img src={img.image_path} alt={img.alt_text||'Villa photo'}/><small>{img.alt_text||'Villa photo'}</small><button onClick={()=>{if(window.confirm('Delete this photo from the library?'))void removePhoto(img.id);}}>Delete</button></div>)}</div>
     <h3>Replace a website photo</h3><p>Select a photo from the library for each position.</p>
     {slotLabels.map((label,i)=><div key={i} className="photoReplaceSlot">
      <h4>{label}</h4>
@@ -180,6 +190,7 @@ export default function AdminPage(){
     {section==='SEO' && seoTab==='robots' && <a href="/robots.txt" target="_blank" rel="noreferrer">Open public robots.txt ↗</a>}
     {section==='SEO' && seoTab==='llms' && <a href="/llms.txt" target="_blank" rel="noreferrer">Open public llms.txt ↗</a>}
    </article>}
+   {section==='Social Media' && <article className="adminPanel adminEditor socialEditor"><h2>Social Media Links</h2><p>Add your social media links to display in the website footer. Leave any field empty to hide its icon.</p><p className="adminNote">Only icons with valid links appear on the public website.</p><div className="socialFields">{socialPlatforms.map(p=><label key={p.key} className="socialField"><span className={'socialFieldIcon '+p.key}>{p.symbol}</span><span>{p.name}</span><input type="url" placeholder={'https://www.'+p.host+'/...'} value={values[p.key]||''} onChange={e=>setValues(v=>({...v,[p.key]:e.target.value}))}/></label>)}</div><button onClick={saveSocial} disabled={saving}><Save size={16}/>{saving?'Saving…':'Save Changes'}</button><p className="adminNote">Leave all fields empty to hide the entire Follow Us section.</p>{status&&<p role="status">{status}</p>}</article>}
    {section==='Settings' && <article className="adminPanel adminEditor"><h2>Settings</h2><p>Signed in with secure Supabase authentication.</p><button onClick={logout}>Sign out</button></article>}
    <footer className="adminFooter"><span>Akamé Villa CMS</span><span>Designed by MarketingCy</span></footer>
   </section>
