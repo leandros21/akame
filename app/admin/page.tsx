@@ -37,6 +37,8 @@ export default function AdminPage(){
  const [enquiryStatusFilter,setEnquiryStatusFilter]=useState('All');
  const [enquirySearch,setEnquirySearch]=useState('');
  const [expandedEnquiry,setExpandedEnquiry]=useState<number|null>(null);
+ const [altDrafts,setAltDrafts]=useState<Record<number,string>>({});
+ const [savingAlt,setSavingAlt]=useState<number|null>(null);
  const [newImage,setNewImage]=useState('');
  const [siteSlots,setSiteSlots]=useState<Record<number,string>>({});
  const [pendingSlots,setPendingSlots]=useState<Record<number,string>>({});
@@ -127,6 +129,17 @@ export default function AdminPage(){
   else{setSiteSlots(v=>{const next={...v};delete next[slot];return next;});setPendingSlots(v=>({...v,[slot]:''}));setStatus('Original photo restored on the website.');}
   setReplacingSlot(null);
  };
+ const saveAlt=async(id:number)=>{
+  if(!supabase)return;
+  const photo=images.find(img=>img.id===id);
+  if(!photo)return;
+  const alt=(altDrafts[id]??photo.alt_text??'').trim().slice(0,300);
+  setSavingAlt(id);setStatus('');
+  const {error}=await supabase.from('gallery_images').update({alt_text:alt}).eq('id',id);
+  if(error)setStatus('Could not save alt text: '+error.message);
+  else{setImages(items=>items.map(img=>img.id===id?{...img,alt_text:alt}:img));setStatus('Image alt text saved.');}
+  setSavingAlt(null);
+ };
  const removePhoto=async(id:number)=>{
   if(!supabase)return;const {error}=await supabase.from('gallery_images').delete().eq('id',id);
   if(error)setStatus(error.message);else setImages(v=>v.filter(x=>x.id!==id));
@@ -158,7 +171,7 @@ export default function AdminPage(){
     <h2>Photo library</h2><p>Upload photos here. They will not appear on the website until you assign them to a position below.</p>
     <label>Upload photo (max 10 MB)<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploading} onChange={async e=>{const file=e.target.files?.[0];if(file)await uploadPhoto(file);e.target.value='';}}/></label>
     <h3>Existing photos ({images.length})</h3>
-    <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem"><img src={img.image_path} alt={img.alt_text||'Villa photo'}/><small>{img.alt_text||'Villa photo'}</small><button onClick={()=>{if(window.confirm('Delete this photo from the library?'))void removePhoto(img.id);}}>Delete</button></div>)}</div>
+    <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem"><img src={img.image_path} alt={img.alt_text||'Villa photo'}/><label className="photoAltLabel">Image Alt Text<input type="text" maxLength={300} placeholder="Describe this photo for SEO" value={altDrafts[img.id]??img.alt_text??''} onChange={e=>setAltDrafts(v=>({...v,[img.id]:e.target.value}))}/></label><div className="photoLibraryActions"><button onClick={()=>void saveAlt(img.id)} disabled={savingAlt===img.id}>{savingAlt===img.id?'Saving…':'Save Alt Text'}</button><button onClick={()=>{if(window.confirm('Delete this photo from the library?'))void removePhoto(img.id);}}>Delete</button></div></div>)}</div>
     <h3>Replace a website photo</h3><p>Select a photo from the library for each position.</p>
     {slotLabels.map((label,i)=><div key={i} className="photoReplaceSlot">
      <h4>{label}</h4>
