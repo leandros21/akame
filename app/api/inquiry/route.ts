@@ -17,7 +17,7 @@ export async function POST(req:Request){
   const apiKey=process.env.RESEND_API_KEY, recipient=process.env.ENQUIRY_NOTIFICATION_TO;
   if(apiKey&&recipient){
    try{
-    const safeReply=/^[^\\s@<>\\r\\n]+@[^\\s@<>\\r\\n]+\\.[^\\s@<>\\r\\n]+$/.test(email)?email:undefined;
+    const safeReply=/^[^\s@<>\r\n]+@[^\s@<>\r\n]+\.[^\s@<>\r\n]+$/.test(email)?email:undefined;
     const controller=new AbortController();
     const timer=setTimeout(()=>controller.abort(),8000);
     try{
@@ -31,7 +31,7 @@ export async function POST(req:Request){
        cc:['fxtradingnewsletters@gmail.com'],
        ...(safeReply?{reply_to:safeReply}:{}),
        subject:'New Enquiry — Akamé Villa',
-       text:['New contact form enquiry','','Name: '+name,'Email: '+email,'','Message:',message,'','Source: '+source,'Medium: '+medium,'Campaign: '+campaign,'Referrer: '+referrer].join('\\n')
+       text:['New contact form enquiry','','Name: '+name,'Email: '+email,'','Message:',message,'','Source: '+source,'Medium: '+medium,'Campaign: '+campaign,'Referrer: '+referrer].join('\n')
       })
      });
      if(!response.ok)console.error('Enquiry email notification failed',response.status);
