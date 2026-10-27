@@ -60,3 +60,16 @@
 .guestReviewsControls .guestReviewsDot.active{background:#17231f;transform:scale(1.3)}
 .guestReviewsControls .guestReviewsDot:hover{background:#526b59}
 @media(prefers-reduced-motion:reduce){.guestReviewCard{animation:none}}
+
+/* Native, physically sliding reviews track: no card swapping */
+.guestReviewsCards{display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scroll-behavior:smooth;touch-action:pan-x pan-y;cursor:grab;user-select:text;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.guestReviewsCards::-webkit-scrollbar{display:none}
+.guestReviewsCards:active{cursor:grabbing}
+.guestReviewCard,.guestReviewCard:nth-child(2),.guestReviewCard:nth-child(3){display:flex;flex:0 0 calc((100% - 32px)/3);min-width:0;scroll-snap-align:start;animation:none}
+.guestReviewsBottom{min-height:44px}
+.guestReviewsAttribution{font-size:11px;color:#56665d;pointer-events:none}
+.guestReviewsControls button:disabled{opacity:.35;cursor:default}
+.guestReviewsControls button:disabled:hover{background:transparent;color:#17231f}
+@media(max-width:850px){.guestReviewCard,.guestReviewCard:nth-child(2),.guestReviewCard:nth-child(3){display:flex;flex-basis:calc((100% - 16px)/2)}}
+@media(max-width:560px){.guestReviewCard,.guestReviewCard:nth-child(2),.guestReviewCard:nth-child(3){display:flex;flex-basis:100%}}
+@media(prefers-reduced-motion:reduce){.guestReviewsCards{scroll-behavior:auto}}
