@@ -47,3 +47,16 @@
 .guestReviewsControls button:hover{background:#17231f;color:#fff}
 @media(max-width:850px){.guestReviewsHead{align-items:start;flex-direction:column}.guestReviewsCards{grid-template-columns:repeat(2,minmax(0,1fr))}.guestReviewCard:nth-child(3){display:none}}
 @media(max-width:560px){.guestReviewsCards{grid-template-columns:1fr}.guestReviewCard:nth-child(2){display:none}.guestReviewCard{min-height:220px}.guestReviewsBottom{align-items:start;flex-wrap:wrap}}
+
+/* Guest review navigation and subtle card transitions */
+.guestReviewsCards{touch-action:pan-y;cursor:grab;user-select:none}
+.guestReviewsCards:active{cursor:grabbing}
+.guestReviewCard{animation:guestReviewEnter .28s ease both}
+.guestReviewCard:nth-child(2){animation-delay:.045s}
+.guestReviewCard:nth-child(3){animation-delay:.09s}
+@keyframes guestReviewEnter{from{opacity:.45;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.guestReviewsDots{display:flex;align-items:center;gap:7px;margin-right:8px}
+.guestReviewsControls .guestReviewsDot{width:8px;height:8px;min-width:8px;border:0;border-radius:50%;padding:0;background:#a8aea5;cursor:pointer}
+.guestReviewsControls .guestReviewsDot.active{background:#17231f;transform:scale(1.3)}
+.guestReviewsControls .guestReviewsDot:hover{background:#526b59}
+@media(prefers-reduced-motion:reduce){.guestReviewCard{animation:none}}
