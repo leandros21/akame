@@ -13,12 +13,21 @@ export async function GET() {
     });
     if (!response.ok) {
       let googleStatus = 'UNKNOWN';
+      let googleReason = 'unspecified';
+      let googleMessage = 'No details returned';
       try {
         const body = await response.json();
         const candidate = body?.error?.status;
         if (typeof candidate === 'string' && /^[A-Z_]{2,40}$/.test(candidate)) googleStatus = candidate;
+        const message = body?.error?.message;
+        if (typeof message === 'string') googleMessage = message.slice(0, 500).replace(/AIza[0-9A-Za-z_-]+/g, '[REDACTED]');
+        const reasons = body?.error?.details;
+        if (Array.isArray(reasons)) {
+          const reason = reasons.find((d: any) => typeof d?.reason === 'string')?.reason;
+          if (typeof reason === 'string' && /^[A-Z_]{2,60}$/.test(reason)) googleReason = reason;
+        }
       } catch {}
-      return NextResponse.json({ error: 'Reviews unavailable', diagnostic: 'google_api_error', googleHttpStatus: response.status, googleStatus }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+      return NextResponse.json({ error: 'Reviews unavailable', diagnostic: 'google_api_error', googleHttpStatus: response.status, googleStatus, googleReason, googleMessage }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
     }
     const place = await response.json();
     const reviews = Array.isArray(place.reviews) ? place.reviews.slice(0, 5).map((review: any) => ({
