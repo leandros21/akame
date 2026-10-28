@@ -73,3 +73,10 @@
 @media(max-width:850px){.guestReviewCard,.guestReviewCard:nth-child(2),.guestReviewCard:nth-child(3){display:flex;flex-basis:calc((100% - 16px)/2)}}
 @media(max-width:560px){.guestReviewCard,.guestReviewCard:nth-child(2),.guestReviewCard:nth-child(3){display:flex;flex-basis:100%}}
 @media(prefers-reduced-motion:reduce){.guestReviewsCards{scroll-behavior:auto}}
+
+/* Transparent Akamé logo in header and footer */
+.nav .brand{display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:normal}
+.akameBrandLogo{display:block;width:115px;height:92px;object-fit:contain;background:rgba(250,248,242,.96);border-radius:3px;padding:2px}
+.villaFooterBrand .brand{display:inline-flex;align-items:flex-start}
+.akameFooterLogo{display:block;width:180px;height:156px;object-fit:contain;background:#f5f2e9;border-radius:3px;padding:4px}
+@media(max-width:700px){.akameBrandLogo{width:86px;height:70px}.nav{padding-top:10px;padding-bottom:10px}}
