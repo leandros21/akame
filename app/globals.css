@@ -83,3 +83,10 @@
 
 /* Gallery video thumbnails and play affordance */
 .mosaic button{position:relative;overflow:hidden}.mosaic button>video{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}.mosaic .galleryVideoPlay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:rgba(17,35,28,.75);color:#fff;font-size:25px;pointer-events:none}.lightbox video{max-width:86vw;max-height:86vh;object-fit:contain}
+
+/* Constrain video thumbnails without changing image tiles or source MP4 */
+.mosaic{grid-auto-rows:minmax(0,1fr)}
+.mosaic button{min-width:0;min-height:0}
+.mosaic button:has(>video){width:min(300px,100%);height:min(450px,100%);justify-self:center;align-self:center}
+.mosaic button>video{width:100%;height:100%;max-width:300px;max-height:450px;object-fit:cover}
+@media(max-width:700px){.mosaic button:has(>video){width:100%;height:100%;max-width:300px;max-height:450px}}
