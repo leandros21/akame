@@ -80,3 +80,6 @@
 .villaFooterBrand .brand{display:inline-flex;align-items:flex-start}
 .akameFooterLogo{display:block;width:340px;height:275px;object-fit:contain;background:transparent;border:0;padding:0}
 @media(max-width:700px){.akameBrandLogo{width:145px;height:110px}.akameFooterLogo{width:270px;height:220px}.nav{padding-top:10px;padding-bottom:10px}}
+
+/* Gallery video thumbnails and play affordance */
+.mosaic button{position:relative;overflow:hidden}.mosaic button>video{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}.mosaic .galleryVideoPlay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:rgba(17,35,28,.75);color:#fff;font-size:25px;pointer-events:none}.lightbox video{max-width:86vw;max-height:86vh;object-fit:contain}

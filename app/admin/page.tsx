@@ -111,6 +111,20 @@ export default function AdminPage(){
   if(saveError){setStatus(saveError.message);}else{const {data:all}=await supabase.from('gallery_images').select('*').order('sort_order');setImages(all||[]);setStatus('Photo uploaded to library. Choose a website slot below to publish it.');}
   setUploading(false);
  };
+ const uploadVideo=async(file:File)=>{
+  if(!supabase)return;
+  if(!['video/mp4','video/webm'].includes(file.type)||file.size>41943040){setStatus('Videos must be MP4 or WebM, maximum 40 MB.');return;}
+  setUploading(true);setStatus('Uploading video…');
+  const ext=file.type==='video/mp4'?'mp4':'webm';
+  const path='videos/'+crypto.randomUUID()+'.'+ext;
+  const {error}=await supabase.storage.from('akame-videos').upload(path,file,{contentType:file.type,upsert:false});
+  if(error){setStatus('Video upload failed: '+error.message);setUploading(false);return;}
+  const {data}=supabase.storage.from('akame-videos').getPublicUrl(path);
+  const {error:saveError}=await supabase.from('gallery_images').insert({image_path:data.publicUrl,alt_text:file.name,sort_order:images.length,is_visible:true});
+  if(saveError)setStatus('Video uploaded but could not be saved: '+saveError.message);
+  else{const {data:all}=await supabase.from('gallery_images').select('*').order('sort_order');setImages(all||[]);setStatus('Video uploaded. Assign it to a Gallery slot below to publish.');}
+  setUploading(false);
+ };
  const uploadLogo=async(file:File)=>{
   if(!supabase)return;
   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5242880){setStatus('Logo must be PNG, JPG or WebP, up to 5 MB.');return;}
@@ -184,17 +198,17 @@ export default function AdminPage(){
    {section==='Gallery' && <article className="adminPanel adminEditor">
     <h2>Photo library</h2><p>Upload photos here. They will not appear on the website until you assign them to a position below.</p>
     <label>Upload photo (max 10 MB)<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploading} onChange={async e=>{const file=e.target.files?.[0];if(file)await uploadPhoto(file);e.target.value='';}}/></label>
-    <h3>Existing photos ({images.length})</h3>
-    <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem"><img src={img.image_path} alt={img.alt_text||'Villa photo'}/><label className="photoAltLabel">Image Alt Text<input type="text" maxLength={300} placeholder="Describe this photo for SEO" value={altDrafts[img.id]??img.alt_text??''} onChange={e=>setAltDrafts(v=>({...v,[img.id]:e.target.value}))}/></label><div className="photoLibraryActions"><button onClick={()=>void saveAlt(img.id)} disabled={savingAlt===img.id}>{savingAlt===img.id?'Saving…':'Save Alt Text'}</button><button onClick={()=>{if(window.confirm('Delete this photo from the library?'))void removePhoto(img.id);}}>Delete</button></div></div>)}</div>
+    <label>Upload video (MP4 or WebM, max 40 MB)<input type="file" accept="video/mp4,video/webm" disabled={uploading} onChange={async e=>{const file=e.target.files?.[0];if(file)await uploadVideo(file);e.target.value='';}}/></label><h3>Media library ({images.length})</h3>
+    <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem">{/\.(mp4|webm)(?:\?|$)/i.test(img.image_path)?<video src={img.image_path} preload="metadata" controls playsInline style={{width:'100%',maxHeight:230}}/>:<img src={img.image_path} alt={img.alt_text||'Villa photo'}/>}<label className="photoAltLabel">Image Alt Text<input type="text" maxLength={300} placeholder="Describe this photo for SEO" value={altDrafts[img.id]??img.alt_text??''} onChange={e=>setAltDrafts(v=>({...v,[img.id]:e.target.value}))}/></label><div className="photoLibraryActions"><button onClick={()=>void saveAlt(img.id)} disabled={savingAlt===img.id}>{savingAlt===img.id?'Saving…':'Save Alt Text'}</button><button onClick={()=>{if(window.confirm('Delete this photo from the library?'))void removePhoto(img.id);}}>Delete</button></div></div>)}</div>
     <div className="photoReplaceSlot"><h3>Website logo</h3><p>Upload a PNG with a transparent background to replace the logo in the header and footer. The image will not be added to the Gallery.</p><img src={values.logo_image_url||'/images/akame-logo.png'} alt="Current Akamé logo" style={{width:240,height:180,objectFit:'contain',background:'#172b22',padding:12}}/><label>Upload new logo (PNG, JPG or WebP, max 5 MB)<input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo} onChange={async e=>{const file=e.target.files?.[0];if(file)await uploadLogo(file);e.target.value='';}}/></label>{uploadingLogo&&<p role="status">Uploading logo…</p>}</div>
     <h3>Replace a website photo</h3><p>Select a photo from the library for each position.</p>
     {slotLabels.map((label,i)=><div key={i} className="photoReplaceSlot">
      <h4>{label}</h4>
      <div className="photoReplaceCompare">
-      <div><small>Currently on website</small>{siteSlots[i]||originalPhotos[i]?<img src={siteSlots[i]||originalPhotos[i]} alt={'Current '+label}/>:<div className="photoReplaceEmpty">Empty slot — add a photo</div>}</div>
-      <div><small>Selected replacement</small>{pendingSlots[i]?<img src={pendingSlots[i]} alt={'New '+label}/>:<div className="photoReplaceEmpty">Choose a photo below</div>}</div>
+      <div><small>Currently on website</small>{siteSlots[i]||originalPhotos[i]?/\.(mp4|webm)(?:\?|$)/i.test(siteSlots[i]||originalPhotos[i])?<video src={siteSlots[i]||originalPhotos[i]} preload="metadata" controls playsInline style={{width:'100%'}}/>:<img src={siteSlots[i]||originalPhotos[i]} alt={'Current '+label}/>:<div className="photoReplaceEmpty">Empty slot — add a photo</div>}</div>
+      <div><small>Selected replacement</small>{pendingSlots[i]?/\.(mp4|webm)(?:\?|$)/i.test(pendingSlots[i])?<video src={pendingSlots[i]} preload="metadata" controls playsInline style={{width:'100%'}}/>:<img src={pendingSlots[i]} alt={'New '+label}/>:<div className="photoReplaceEmpty">Choose a photo below</div>}</div>
      </div>
-     <label>Choose from photo library<select value={pendingSlots[i]||''} onChange={e=>setPendingSlots(v=>({...v,[i]:e.target.value}))}><option value="">Select a replacement photo…</option>{images.map(img=><option key={img.id} value={img.image_path}>{img.alt_text||img.image_path}</option>)}</select></label>
+     <label>Choose from photo library<select value={pendingSlots[i]||''} onChange={e=>setPendingSlots(v=>({...v,[i]:e.target.value}))}><option value="">Select a replacement photo…</option>{images.map(img=><option key={img.id} value={img.image_path}>{/\.(mp4|webm)(?:\?|$)/i.test(img.image_path)?'Video: ':''}{img.alt_text||img.image_path}</option>)}</select></label>
      <div className="photoReplaceActions"><button type="button" disabled={!pendingSlots[i]||replacingSlot!==null} onClick={()=>replacePhoto(i)}>{replacingSlot===i?'Replacing…':'Replace Photo'}</button>{siteSlots[i]&&<button type="button" disabled={replacingSlot!==null} onClick={()=>restorePhoto(i)}>{i>=9?'Remove Photo':'Restore Original'}</button>}</div>
     </div>)}
     <button type="button" disabled={extraGallerySlots>=92} onClick={()=>setExtraGallerySlots(v=>Math.min(v+1,92))}>+ Add another Gallery photo slot</button>
