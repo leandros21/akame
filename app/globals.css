@@ -100,3 +100,5 @@
  .mosaicStable:has(>button>video){height:auto;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:240px}
  .mosaicStable>button:has(>video){grid-column:auto;grid-row:auto}
 }
+
+@media(min-width:701px){.mosaicStable:has(>button:nth-child(7)>video)>button:nth-child(6){grid-column:1/3;grid-row:3}.mosaicStable:has(>button:nth-child(7)>video)>button:nth-child(7){grid-column:3;grid-row:3}}
