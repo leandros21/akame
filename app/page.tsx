@@ -34,7 +34,7 @@ export default function Home(){
  const photos=[...imgs.map((src,i)=>slots[i]||src),...Object.entries(slots).filter(([slot,path])=>Number(slot)>=9 && !!path).sort(([a],[b])=>Number(a)-Number(b)).map(([,path])=>path),...uploadedGallery.filter(src=>!imgs.includes(src) && !Object.values(slots).includes(src))];
  const galleryItems=[...photos.slice(2,8).map((src,i)=>({src,index:i+2})),...photos.slice(9).map((src,i)=>({src,index:i+9}))];
  const videoItem=galleryItems.find(item=>/\.(mp4|webm)(?:\?|$)/i.test(item.src));
- const galleryDisplay=videoItem?[...galleryItems.filter(item=>item!==videoItem).slice(0,6),videoItem,...galleryItems.filter(item=>item!==videoItem).slice(6)]:galleryItems;
+ const galleryDisplay=videoItem?[...galleryItems.filter(item=>item!==videoItem).slice(0,7),videoItem,...galleryItems.filter(item=>item!==videoItem).slice(7)]:galleryItems;
  const amenities:string[]=(()=>{try{const a=JSON.parse(content.amenities||'[]');return Array.isArray(a)?a.filter((v:unknown)=>typeof v==='string'):[];}catch{return [];}})();
  async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault(); setSent('Sending…'); const f=new FormData(e.currentTarget); const r=await fetch('/api/inquiry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...Object.fromEntries(f),...attribution,verification_token:challenge?.token})}); setSent(r.ok?'Thank you — your inquiry has been received.':r.status===400?'Please check your details and verification answer.':'Please try again.'); if(r.ok)e.currentTarget.reset();fetch('/api/human-question',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setChallenge(data?.token?data:null)).catch(()=>setChallenge(null));}
  return <main>
