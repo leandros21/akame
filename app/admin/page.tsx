@@ -44,7 +44,7 @@ export default function AdminPage(){
  const [pendingSlots,setPendingSlots]=useState<Record<number,string>>({});
  const [replacingSlot,setReplacingSlot]=useState<number|null>(null);
  const [status,setStatus]=useState('');
- const [role,setRole]=useState('admin');const [members,setMembers]=useState<{user_id:string,role:string}[]>([]);const [invites,setInvites]=useState<{email:string,role:string}[]>([]);const [inviteEmail,setInviteEmail]=useState('');const [uploading,setUploading]=useState(false);
+ const [role,setRole]=useState('admin');const [members,setMembers]=useState<{user_id:string,role:string}[]>([]);const [invites,setInvites]=useState<{email:string,role:string}[]>([]);const [inviteEmail,setInviteEmail]=useState('');const [uploading,setUploading]=useState(false);const [uploadingLogo,setUploadingLogo]=useState(false);const [extraGallerySlots,setExtraGallerySlots]=useState(2);
  useEffect(()=>{
   let active=true;
   async function check(){
@@ -60,7 +60,7 @@ export default function AdminPage(){
   if(!authorized||!supabase)return;
   supabase.from('site_content').select('key,value').then(({data})=>{if(data)setValues(Object.fromEntries(data.map(x=>[x.key,x.key==='amenities'?(()=>{try{return JSON.parse(x.value).join('\n')}catch{return x.value}})():x.value])));});
   supabase.from('gallery_images').select('*').order('sort_order').then(({data})=>{if(data)setImages(data);});
-  supabase.from('site_image_slots').select('slot,image_path').then(({data})=>{if(data)setSiteSlots(Object.fromEntries(data.map(x=>[x.slot,x.image_path])));});
+  supabase.from('site_image_slots').select('slot,image_path').then(({data})=>{if(data){setSiteSlots(Object.fromEntries(data.map(x=>[x.slot,x.image_path])));setExtraGallerySlots(Math.max(2,...data.filter(x=>x.slot>=9).map(x=>x.slot-8)));}});
   if(role==='super_admin'){supabase.from('cms_admins').select('user_id,role').then(({data})=>setMembers(data||[]));supabase.from('cms_admin_invites').select('email,role').then(({data})=>setInvites(data||[]));}
   supabase.from('inquiries').select('*').order('created_at',{ascending:false}).then(({data})=>{if(data)setEnquiries(data);});
  },[authorized,role]);
@@ -111,6 +111,20 @@ export default function AdminPage(){
   if(saveError){setStatus(saveError.message);}else{const {data:all}=await supabase.from('gallery_images').select('*').order('sort_order');setImages(all||[]);setStatus('Photo uploaded to library. Choose a website slot below to publish it.');}
   setUploading(false);
  };
+ const uploadLogo=async(file:File)=>{
+  if(!supabase)return;
+  if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5242880){setStatus('Logo must be PNG, JPG or WebP, up to 5 MB.');return;}
+  setUploadingLogo(true);setStatus('Uploading logo…');
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path='logos/'+crypto.randomUUID()+'.'+ext;
+  const {error}=await supabase.storage.from('akame-gallery').upload(path,file,{contentType:file.type,upsert:false});
+  if(error){setStatus('Logo upload failed: '+error.message);setUploadingLogo(false);return;}
+  const {data}=supabase.storage.from('akame-gallery').getPublicUrl(path);
+  const {error:saveError}=await supabase.from('site_content').upsert({key:'logo_image_url',value:data.publicUrl},{onConflict:'key'});
+  if(saveError)setStatus('Logo uploaded but not published: '+saveError.message);
+  else{setValues(v=>({...v,logo_image_url:data.publicUrl}));setStatus('Logo published. Reload the website to see it in header and footer.');}
+  setUploadingLogo(false);
+ };
  const replacePhoto=async(slot:number)=>{
   if(!supabase)return;
   const path=pendingSlots[slot];
@@ -151,7 +165,7 @@ export default function AdminPage(){
   if(error)setStatus(error.message);else{setInvites(v=>[...v,{email,role:'admin'}]);setInviteEmail('');setStatus('Invitation recorded. The person must create and verify a Supabase account with this email.');}
  };
  const originalPhotos=['/images/WhatsApp Image 2026-10-02 at 22.56.07 (8).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (6).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (2).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (7).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.07 (3).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (5).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (3).jpeg'];
- const slotLabels=['Homepage hero','Villa feature','Gallery photo 1','Gallery photo 2','Gallery photo 3','Gallery photo 4','Gallery photo 5','Gallery photo 6','Location image'];
+ const slotLabels=['Homepage hero','Villa feature','Gallery photo 1','Gallery photo 2','Gallery photo 3','Gallery photo 4','Gallery photo 5','Gallery photo 6','Location image',...Array.from({length:extraGallerySlots},(_,i)=>'Gallery photo '+(i+7))];
  return (
  <main className="adminShell">
   <aside className="adminSide">
@@ -172,16 +186,18 @@ export default function AdminPage(){
     <label>Upload photo (max 10 MB)<input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={uploading} onChange={async e=>{const file=e.target.files?.[0];if(file)await uploadPhoto(file);e.target.value='';}}/></label>
     <h3>Existing photos ({images.length})</h3>
     <div className="photoLibrary">{images.map(img=><div key={img.id} className="photoLibraryItem"><img src={img.image_path} alt={img.alt_text||'Villa photo'}/><label className="photoAltLabel">Image Alt Text<input type="text" maxLength={300} placeholder="Describe this photo for SEO" value={altDrafts[img.id]??img.alt_text??''} onChange={e=>setAltDrafts(v=>({...v,[img.id]:e.target.value}))}/></label><div className="photoLibraryActions"><button onClick={()=>void saveAlt(img.id)} disabled={savingAlt===img.id}>{savingAlt===img.id?'Saving…':'Save Alt Text'}</button><button onClick={()=>{if(window.confirm('Delete this photo from the library?'))void removePhoto(img.id);}}>Delete</button></div></div>)}</div>
+    <div className="photoReplaceSlot"><h3>Website logo</h3><p>Upload a PNG with a transparent background to replace the logo in the header and footer. The image will not be added to the Gallery.</p><img src={values.logo_image_url||'/images/akame-logo.png'} alt="Current Akamé logo" style={{width:240,height:180,objectFit:'contain',background:'#172b22',padding:12}}/><label>Upload new logo (PNG, JPG or WebP, max 5 MB)<input type="file" accept="image/png,image/jpeg,image/webp" disabled={uploadingLogo} onChange={async e=>{const file=e.target.files?.[0];if(file)await uploadLogo(file);e.target.value='';}}/></label>{uploadingLogo&&<p role="status">Uploading logo…</p>}</div>
     <h3>Replace a website photo</h3><p>Select a photo from the library for each position.</p>
     {slotLabels.map((label,i)=><div key={i} className="photoReplaceSlot">
      <h4>{label}</h4>
      <div className="photoReplaceCompare">
-      <div><small>Currently on website</small><img src={siteSlots[i]||originalPhotos[i]} alt={'Current '+label}/></div>
+      <div><small>Currently on website</small>{siteSlots[i]||originalPhotos[i]?<img src={siteSlots[i]||originalPhotos[i]} alt={'Current '+label}/>:<div className="photoReplaceEmpty">Empty slot — add a photo</div>}</div>
       <div><small>Selected replacement</small>{pendingSlots[i]?<img src={pendingSlots[i]} alt={'New '+label}/>:<div className="photoReplaceEmpty">Choose a photo below</div>}</div>
      </div>
      <label>Choose from photo library<select value={pendingSlots[i]||''} onChange={e=>setPendingSlots(v=>({...v,[i]:e.target.value}))}><option value="">Select a replacement photo…</option>{images.map(img=><option key={img.id} value={img.image_path}>{img.alt_text||img.image_path}</option>)}</select></label>
-     <div className="photoReplaceActions"><button type="button" disabled={!pendingSlots[i]||replacingSlot!==null} onClick={()=>replacePhoto(i)}>{replacingSlot===i?'Replacing…':'Replace Photo'}</button>{siteSlots[i]&&<button type="button" disabled={replacingSlot!==null} onClick={()=>restorePhoto(i)}>Restore Original</button>}</div>
+     <div className="photoReplaceActions"><button type="button" disabled={!pendingSlots[i]||replacingSlot!==null} onClick={()=>replacePhoto(i)}>{replacingSlot===i?'Replacing…':'Replace Photo'}</button>{siteSlots[i]&&<button type="button" disabled={replacingSlot!==null} onClick={()=>restorePhoto(i)}>{i>=9?'Remove Photo':'Restore Original'}</button>}</div>
     </div>)}
+    <button type="button" disabled={extraGallerySlots>=92} onClick={()=>setExtraGallerySlots(v=>Math.min(v+1,92))}>+ Add another Gallery photo slot</button>
     <p role="status">{status}</p>
    </article>}
    {section==='Admins' && role==='super_admin' && <article className="adminPanel adminEditor">
