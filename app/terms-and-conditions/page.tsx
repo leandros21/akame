@@ -26,6 +26,6 @@ export default function TermsPage(){
  <section><h2>9. Changes and applicable law</h2><p>We may update these website terms by publishing a revised version here. Subject to any mandatory consumer protections, these website-use terms are governed by the laws of the Republic of Cyprus.</p></section>
  <section><h2>10. Contact</h2><p>For questions about this website or these terms, please <Link href="/#contact">contact Akamé Luxury Beach Villa</Link>.</p></section>
  <aside className="legalNotice"><strong>Booking conditions:</strong> For a specific reservation, refer to the terms shown by the booking provider and any agreement issued for your stay.</aside>
- </article><footer className="legalFooter"><Link href="/">← Back to Akamé</Link><nav><Link href="/privacy-and-cookies-policy">Privacy &amp; Cookies Policy</Link><Link href="/terms-and-conditions">Terms &amp; Conditions</Link></nav></footer>
+ </article><footer className="legalFooter"><Link href="/">← Back to Akamé</Link><nav><Link href="/privacy-and-cookies-policy">Privacy &amp; Cookies Policy</Link><Link href="/refund-and-cancellation-policy">Refund &amp; Cancellation Policy</Link><Link href="/terms-and-conditions">Terms &amp; Conditions</Link></nav></footer>
  </main>;
 }
