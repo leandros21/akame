@@ -27,6 +27,6 @@ export default function PrivacyPage(){
  <section><h2>10. Children</h2><p>This website is intended for people making accommodation enquiries. Please do not send personal information about children unless it is necessary for an enquiry and you are authorised to do so.</p></section>
  <section><h2>11. Changes and contact</h2><p>We may update this policy as our services and legal requirements change. The latest version will appear on this page. For questions or data protection requests, please <Link href="/#contact">contact us</Link>.</p></section>
  <aside className="legalNotice"><strong>Privacy note:</strong> The operator should verify its legal identity, retention schedule, international transfers, cookie inventory and consent implementation before treating this page as a final compliance document.</aside>
- </article><footer className="legalFooter"><Link href="/">← Back to Akamé</Link><nav><Link href="/terms-and-conditions">Terms &amp; Conditions</Link><Link href="/privacy-and-cookies-policy">Privacy &amp; Cookies Policy</Link></nav></footer>
+ </article><footer className="legalFooter"><Link href="/">← Back to Akamé</Link><nav><Link href="/terms-and-conditions">Terms &amp; Conditions</Link><Link href="/privacy-and-cookies-policy">Privacy &amp; Cookies Policy</Link><Link href="/refund-and-cancellation-policy">Refund &amp; Cancellation Policy</Link></nav></footer>
  </main>;
 }
