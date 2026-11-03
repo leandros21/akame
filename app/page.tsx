@@ -65,7 +65,7 @@ export default function Home(){
    <div className="villaFooterGrid">
     <div className="villaFooterBrand"><div className="brand"><img className="akameFooterLogo" src={content.logo_image_url||"/images/akame-logo.png"} alt="Akamé Luxury Beach Villa" /></div><p>{content.footer_tagline||'Private pool · Jacuzzi · Akamas coast'}</p></div>
     <div className="villaFooterColumn"><h3>Navigation</h3><a href="#top">Home</a><a href="#villa">The Villa</a><a href="#gallery">Gallery</a><a href="#location">Location</a><a href="#contact">Contact</a></div>
-    <div className="villaFooterColumn"><h3>Legal</h3><a href="/terms-and-conditions">Terms &amp; Conditions</a><a href="/privacy-and-cookies-policy">Privacy &amp; Cookies Policy</a></div>
+    <div className="villaFooterColumn"><h3>Legal</h3><a href="/terms-and-conditions">Terms &amp; Conditions</a><a href="/privacy-and-cookies-policy">Privacy &amp; Cookies Policy</a><a href="/refund-and-cancellation-policy">Refund &amp; Cancellation Policy</a></div>
     <div className="villaFooterColumn"><h3>Contact</h3><p>{content.location_description||'Akamé Villa · Cyprus'}</p><a href="#contact">Send an enquiry ↗</a></div>
     {socialPlatforms.some(platform=>socialUrl(content[platform.key],platform.host))&&<div className="villaFooterColumn"><h3>Follow Us</h3><div className="villaSocialIcons">{socialPlatforms.map(platform=>{const href=socialUrl(content[platform.key],platform.host);return href?<a key={platform.key} href={href} target="_blank" rel="noopener noreferrer" aria-label={platform.name} title={platform.name} className={'villaSocialIcon '+platform.key}><span>{platform.symbol}</span></a>:null;})}</div></div>}
    </div>
