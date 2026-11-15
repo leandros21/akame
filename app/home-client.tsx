@@ -1,0 +1,76 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { socialPlatforms, socialUrl } from './social-platforms';
+import GuestReviews from './guest-reviews';
+import { createClient } from '@supabase/supabase-js';
+import { Waves, BedDouble, Bath, Building2, Users, Wifi, Car, Snowflake, UtensilsCrossed, MapPin, ArrowUpRight, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const imgs = [
+'/images/WhatsApp Image 2026-10-02 at 22.56.07 (8).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (6).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (2).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (7).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.09 (1).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.07 (3).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.06 (5).jpeg','/images/WhatsApp Image 2026-10-02 at 22.56.08 (3).jpeg'];
+const db = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ? createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY):null;
+const booking='https://akameluxurybeachvilla.reserve-online.net/';
+export default function Home({initialSlots}:{initialSlots:Record<number,string>}){
+ const [menu,setMenu]=useState(false); const [light,setLight]=useState<number|null>(null); const [sent,setSent]=useState('');
+ const [content,setContent]=useState<Record<string,string>>({});const [uploadedGallery,setUploadedGallery]=useState<string[]>([]);const [slots,setSlots]=useState<Record<number,string>>(initialSlots);const [photoAlt,setPhotoAlt]=useState<Record<string,string>>({});
+ useEffect(()=>{if(!db)return;db.from('site_content').select('key,value').then(({data})=>{if(data)setContent(Object.fromEntries(data.map(x=>[x.key,x.value])));});db.from('site_image_slots').select('slot,image_path').then(({data})=>{if(data)setSlots(Object.fromEntries(data.map(x=>[x.slot,x.image_path])));});db.from('gallery_images').select('image_path,alt_text').eq('is_visible',true).then(({data})=>{if(data){setPhotoAlt(Object.fromEntries(data.map(x=>[x.image_path,x.alt_text||''])));setUploadedGallery(data.map(x=>x.image_path).filter((path:string)=>path.startsWith('https://') && (path.includes('/storage/v1/object/public/akame-gallery/') || path.includes('/storage/v1/object/public/akame-videos/'))));}});},[]);
+ const [challenge,setChallenge]=useState<{question:string,token:string}|null>(null);
+ useEffect(()=>{fetch('/api/human-question',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>{if(data?.token)setChallenge(data);}).catch(()=>{});},[]);
+ const [attribution,setAttribution]=useState({source:'Unknown',medium:'',campaign:'',referrer:''});
+ useEffect(()=>{
+  try{
+   const params=new URLSearchParams(window.location.search);
+   const previous=sessionStorage.getItem('akame_attribution');
+   if(previous){setAttribution(JSON.parse(previous));return;}
+   const ref=document.referrer;
+   const host=ref?new URL(ref).hostname.toLowerCase():'';
+   const utm=params.get('utm_source')?.trim().slice(0,100);
+   const medium=params.get('utm_medium')?.trim().slice(0,100)||'';
+   const campaign=params.get('utm_campaign')?.trim().slice(0,150)||'';
+   const source=utm||(host.includes('google.')?'Google':host.includes('instagram.')?'Instagram':host.includes('facebook.')||host.includes('fb.com')?'Facebook':host.includes('tiktok.')?'TikTok':host.includes('bing.')?'Bing':host.includes('pinterest.')?'Pinterest':host&&host!==window.location.hostname?host:ref?'Internal':'Direct');
+   const data={source,medium,campaign,referrer:ref.slice(0,1000)};
+   sessionStorage.setItem('akame_attribution',JSON.stringify(data));setAttribution(data);
+  }catch{}
+ },[]);
+ const photos=[...imgs.map((src,i)=>slots[i]||src),...Object.entries(slots).filter(([slot,path])=>Number(slot)>=9 && !!path).sort(([a],[b])=>Number(a)-Number(b)).map(([,path])=>path),...uploadedGallery.filter(src=>!imgs.includes(src) && !Object.values(slots).includes(src))];
+ const galleryItems=[...photos.slice(2,8).map((src,i)=>({src,index:i+2})),...photos.slice(9).map((src,i)=>({src,index:i+9}))];
+ const videoItem=galleryItems.find(item=>/\.(mp4|webm)(?:\?|$)/i.test(item.src));
+ const galleryDisplay=videoItem?[...galleryItems.filter(item=>item!==videoItem).slice(0,7),videoItem,...galleryItems.filter(item=>item!==videoItem).slice(7)]:galleryItems;
+ const amenities:string[]=(()=>{try{const a=JSON.parse(content.amenities||'[]');return Array.isArray(a)?a.filter((v:unknown)=>typeof v==='string'):[];}catch{return [];}})();
+ async function submit(e:React.FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  const form=e.currentTarget;
+  setSent('Sending…');
+  try {
+   const fields=new FormData(form);
+   const r=await fetch('/api/inquiry',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...Object.fromEntries(fields),...attribution,verification_token:challenge?.token})});
+   if(r.ok){setSent('Thank you — your inquiry has been received.');form.reset();}
+   else if(r.status===429){setSent('Too many enquiry attempts. Please wait up to 10 minutes before trying again.');}
+   else if(r.status===400){setSent('Please check your details and verification answer.');}
+   else{setSent('Please try again.');}
+  }catch{setSent('Unable to send your enquiry right now. Please try again later.');}
+  fetch('/api/human-question',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(data=>setChallenge(data?.token?data:null)).catch(()=>setChallenge(null));
+ }
+ return <main>
+  <header className="nav"><a className="brand" href="#top"><img className="akameBrandLogo" src={content.logo_image_url||"/images/akame-logo.png"} alt="Akamé Luxury Beach Villa" /></a><nav className={menu?'links open':'links'}>{['Villa','Gallery','Amenities','Location','Contact'].map(x=><a key={x} href={'#'+x.toLowerCase()} onClick={()=>setMenu(false)} >{content['nav_'+x.toLowerCase()]||x}</a>)}<a className="book" href={booking} target="_blank">Book your stay <ArrowUpRight size={15}/></a></nav><button className="hamb" onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button></header>
+  <section id="top" className="hero" style={{backgroundImage:`linear-gradient(90deg,rgba(10,20,18,.56),rgba(10,20,18,.05)),url("${photos[0]}")`}}><div className="heroCopy"><h1>{content.hero_title||'Where the wild'}<br/><em>{content.top_title_italic||"meets the refined."}</em></h1><p>{content.hero_subtitle||'A private beach escape shaped by Mediterranean light, quiet luxury and the untamed beauty of Akamas.'}</p><div className="actions"><a className="primary" href={booking} target="_blank">Book your stay <ArrowUpRight size={17}/></a><a className="ghost" href="#villa">{content.top_secondary_button||"Discover Akamé"}</a></div></div><div className="facts"><span><Users/>{content.top_guests||"Up to 8 guests"}</span><span><BedDouble/>{content.top_bedrooms||"4 bedrooms"}</span><span><Bath/>{content.top_bathrooms||"4 bathrooms"}</span><span><Waves/>{content.top_pool||"Private pool & jacuzzi"}</span></div></section>
+  <section id="villa" className="intro section"><div><p className="eyebrow dark">{content.villa_eyebrow||"THE VILLA"}</p><h2>{content.villa_title||"A slower rhythm,"}<br/><em>{content.villa_title_italic||"by the sea."}</em></h2></div><div className="copy"><p>{content.villa_description||'Akamé is a contemporary private villa designed for effortless days between sea, pool and sky. Generous indoor-outdoor spaces create a calm base for families and friends exploring the Akamas coast.'}</p><p>{content.villa_paragraph_2||"Wake slowly, swim before breakfast, gather around the table at sunset, then retreat to the rooftop jacuzzi as the Mediterranean turns gold."}</p><a href="#gallery">{content.villa_link||"Explore the villa ↓"}</a></div></section>
+  <section className="featureGrid"><img src={photos[1]||photos[0]} alt={photoAlt[photos[1]||photos[0]]||"Akamé Villa"}/><div className="featureText"><p className="eyebrow dark">{content.feature_eyebrow||"PRIVATE ESCAPE"}</p><h2>{content.feature_title||"Made for"}<br/><em>{content.feature_title_italic||"unhurried days."}</em></h2><p>{content.feature_description||"Clean architecture, natural textures and generous outdoor living put the landscape at the centre of every stay."}</p><div className="mini"><span>Private pool</span><span>Rooftop jacuzzi</span><span>{content.feature_3||"Outdoor dining"}</span><span>{content.feature_4||"Landscaped garden"}</span></div></div></section>
+  <section id="gallery" className="section gallery"><div className="sectionHead"><div><p className="eyebrow dark">{content.gallery_eyebrow||"GALLERY"}</p><h2>{content.gallery_title||"Inside "}<em>{content.gallery_title_italic||"Akamé."}</em></h2></div><p>{content.gallery_description||"Spaces designed to feel open, tactile and connected to the Mediterranean landscape."}</p></div><div className="mosaic mosaicStable">{galleryDisplay.map(({src,index},i)=><button key={src} className={'g'+i} onClick={()=>setLight(index)}>{/\.(mp4|webm)(?:\?|$)/i.test(src)?<><video src={src+'#t=0.1'} preload="metadata" muted playsInline aria-label={photoAlt[src]||'Akamé Villa video'}/><span className="galleryVideoPlay" aria-hidden="true">▶</span></>:<><img src={src} alt={photoAlt[src]||`Akamé Villa gallery ${i+1}`}/><span>{content.gallery_hover||"View"}</span></>}</button>)}</div></section>
+  <section id="amenities" className="amenities section"><p className="eyebrow">{content.amenities_eyebrow||"EVERYTHING YOU NEED"}</p><h2>{content.amenities_title||"Comfort, "}<em>{content.amenities_title_italic||"considered."}</em></h2><div className="amenityGrid">{(amenities.length?amenities.map((label:string)=>[label.toLowerCase().includes('lift')?Building2:Waves,label]):[[Waves,'Private pool'],[Waves,'Rooftop jacuzzi'],[Wifi,'High-speed Wi-Fi'],[Snowflake,'Air conditioning'],[UtensilsCrossed,'Equipped kitchen'],[Car,'Private parking'],[BedDouble,'4 bedrooms'],[Bath,'4 bathrooms'],[Building2,'Private lift serving all four levels']]).map(([Icon,label]:any)=><div key={label}><Icon/><span>{label}</span></div>)}</div></section>
+  <section id="location" className="location section"><div className="locationCard"><p className="eyebrow dark">{content.location_eyebrow||"THE AKAMAS COAST"}</p><h2>{content.location_title||"At the edge of"}<br/><em>{content.location_title_italic||"something wild."}</em></h2><p>{content.location_description||"Set in Polis Chrysochous, Akamé places you close to Latchi and the dramatic landscapes of the Akamas Peninsula — one of Cyprus's most distinctive coastal escapes."}</p><a className="textLink" href="https://maps.google.com/?q=Polis+Chrysochous+Cyprus" target="_blank"><MapPin size={18}/> Explore the area <ArrowUpRight size={16}/></a></div><img src={photos[8]||photos[0]} alt={photoAlt[photos[8]||photos[0]]||"Akamé surroundings"}/></section>
+  <section className="quote"><p>“Some places are visited.<br/><em>{content.quote_italic||"Others are felt."}</em>”</p><span>{content.quote_attribution||"— AKAMÉ"}</span></section>
+  <GuestReviews/>
+  <section id="contact" className="contact section"><div><p className="eyebrow dark">{content.contact_eyebrow||"CONTACT"}</p><h2>{content.contact_title||"Your escape"}<br/><em>{content.contact_title_italic||"starts here."}</em></h2><p>{content.contact_description||"Have a question before you book? Send us a note and we'll help with the details of your stay."}</p><a className="primary darkBtn" href={booking} target="_blank">Check availability <ArrowUpRight size={17}/></a></div><form onSubmit={submit}><label>{content.contact_name_label||"Name"} <span aria-hidden="true">*</span><input name="name" required placeholder="Your name"/></label><label>{content.contact_email_label||"Email"} <span aria-hidden="true">*</span><input name="email" type="email" required placeholder="you@email.com"/></label><label>{content.contact_message_label||"Message"} <span aria-hidden="true">*</span><textarea name="message" required placeholder="Tell us about your stay…"/></label><label className="humanVerify">Human verification · {challenge?.question||'Loading question…'} <span aria-hidden="true">*</span><input name="human_answer" type="number" inputMode="numeric" required placeholder="Your answer" autoComplete="off"/></label><button className="primary" type="submit" disabled={!challenge}>Send inquiry <ArrowUpRight size={17}/></button><p className="status">{sent}</p></form></section>
+  <footer className="villaFooter">
+   <div className="villaFooterGrid">
+    <div className="villaFooterBrand"><div className="brand"><img className="akameFooterLogo" src={content.logo_image_url||"/images/akame-logo.png"} alt="Akamé Luxury Beach Villa" /></div><p>{content.footer_tagline||'Private pool · Jacuzzi · Akamas coast'}</p></div>
+    <div className="villaFooterColumn"><h3>Navigation</h3><a href="#top">Home</a><a href="#villa">The Villa</a><a href="#gallery">Gallery</a><a href="#location">Location</a><a href="#contact">Contact</a></div>
+    <div className="villaFooterColumn"><h3>Legal</h3><a href="/terms-and-conditions">Terms &amp; Conditions</a><a href="/privacy-and-cookies-policy">Privacy &amp; Cookies Policy</a><a href="/refund-and-cancellation-policy">Refund &amp; Cancellation Policy</a></div>
+    <div className="villaFooterColumn"><h3>Contact</h3><p>{content.location_description||'Akamé Villa · Cyprus'}</p><a href="#contact">Send an enquiry ↗</a></div>
+    {socialPlatforms.some(platform=>socialUrl(content[platform.key],platform.host))&&<div className="villaFooterColumn"><h3>Follow Us</h3><div className="villaSocialIcons">{socialPlatforms.map(platform=>{const href=socialUrl(content[platform.key],platform.host);return href?<a key={platform.key} href={href} target="_blank" rel="noopener noreferrer" aria-label={platform.name} title={platform.name} className={'villaSocialIcon '+platform.key}><span>{platform.symbol}</span></a>:null;})}</div></div>}
+   </div>
+   <div className="villaFooterBottom"><span>© {new Date().getFullYear()} Akamé Villa. All rights reserved.</span><span>{content.footer_credit||'Designed by'} <a href="https://www.marketingcy.com" target="_blank" rel="noopener noreferrer">MarketingCy ↗</a></span><a href="#top">{content.footer_back||'Back to top ↑'}</a></div>
+  </footer>
+  {light!==null&&<div className="lightbox" onClick={()=>setLight(null)}><button className="close" onClick={()=>setLight(null)}><X/></button><button className="prev" onClick={e=>{e.stopPropagation();setLight((light-1+photos.length)%photos.length)}}><ChevronLeft/></button>{/\.(mp4|webm)(?:\?|$)/i.test(photos[light])?<video key={photos[light]} src={photos[light]} controls autoPlay playsInline preload="metadata" onClick={e=>e.stopPropagation()} style={{maxWidth:'86vw',maxHeight:'86vh'}}/>:<img src={photos[light]} alt={photoAlt[photos[light]]||"Akamé Villa enlarged"} onClick={e=>e.stopPropagation()}/>}<button className="next" onClick={e=>{e.stopPropagation();setLight((light+1)%photos.length)}}><ChevronRight/></button></div>}
+ </main>
+}
